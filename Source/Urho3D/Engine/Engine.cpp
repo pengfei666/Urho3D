@@ -97,7 +97,7 @@ Engine::Engine(Context* context) :
     timeStep_(0.0f),
     timeStepSmoothing_(2),
     minFps_(10),
-#if defined(IOS) || defined(__ANDROID__) || defined(__arm__) || defined(__aarch64__)
+#if defined(IOS) || defined(TVOS) || defined(__ANDROID__) || defined(__arm__) || defined(__aarch64__)
     maxFps_(60),
     maxInactiveFps_(10),
     pauseMinimized_(true),
@@ -539,7 +539,7 @@ void Engine::RunFrame()
 Console* Engine::CreateConsole()
 {
     if (headless_ || !initialized_)
-        return 0;
+        return nullptr;
 
     // Return existing console if possible
     Console* console = GetSubsystem<Console>();
@@ -555,7 +555,7 @@ Console* Engine::CreateConsole()
 DebugHud* Engine::CreateDebugHud()
 {
     if (headless_ || !initialized_)
-        return 0;
+        return nullptr;
 
     // Return existing debug HUD if possible
     DebugHud* debugHud = GetSubsystem<DebugHud>();
@@ -596,7 +596,7 @@ void Engine::SetPauseMinimized(bool enable)
 void Engine::SetAutoExit(bool enable)
 {
     // On mobile platforms exit is mandatory if requested by the platform itself and should not be attempted to be disabled
-#if defined(__ANDROID__) || defined(IOS)
+#if defined(__ANDROID__) || defined(IOS) || defined(TVOS)
     enable = true;
 #endif
     autoExit_ = enable;
@@ -609,8 +609,8 @@ void Engine::SetNextTimeStep(float seconds)
 
 void Engine::Exit()
 {
-#if defined(IOS)
-    // On iOS it's not legal for the application to exit on its own, instead it will be minimized with the home key
+#if defined(IOS) || defined(TVOS)
+    // On iOS/tvOS it's not legal for the application to exit on its own, instead it will be minimized with the home key
 #else
     DoExit();
 #endif
@@ -752,10 +752,10 @@ void Engine::ApplyFrameLimit()
 
 #ifndef __EMSCRIPTEN__
     // Perform waiting loop if maximum FPS set
-#ifndef IOS
+#if !defined(IOS) && !defined(TVOS)
     if (maxFps)
 #else
-    // If on iOS and target framerate is 60 or above, just let the animation callback handle frame timing
+    // If on iOS/tvOS and target framerate is 60 or above, just let the animation callback handle frame timing
     // instead of waiting ourselves
     if (maxFps < 60)
 #endif

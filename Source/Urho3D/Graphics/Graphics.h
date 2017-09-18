@@ -606,8 +606,13 @@ private:
     unsigned CreateFramebuffer();
     /// Delete a framebuffer using either extension or core functionality. Used only on OpenGL.
     void DeleteFramebuffer(unsigned fbo);
+
+    unsigned CreateColorRenderBuffer(unsigned multiSample, unsigned width, unsigned height);
+    unsigned CreateDepthStencilRenderBuffer(unsigned multiSample, unsigned width, unsigned height);
+
     /// Bind a framebuffer using either extension or core functionality. Used only on OpenGL.
     void BindFramebuffer(unsigned fbo);
+    void BindRenderbuffer(unsigned co);
     /// Bind a framebuffer color attachment using either extension or core functionality. Used only on OpenGL.
     void BindColorAttachment(unsigned index, unsigned target, unsigned object, bool isRenderBuffer);
     /// Bind a framebuffer depth attachment using either extension or core functionality. Used only on OpenGL.
@@ -615,6 +620,10 @@ private:
     /// Bind a framebuffer stencil attachment using either extension or core functionality. Used only on OpenGL.
     void BindStencilAttachment(unsigned object, bool isRenderBuffer);
     /// Check FBO completeness using either extension or core functionality. Used only on OpenGL.
+
+    void ApplyColorRenderbufferSize(unsigned multiSample, unsigned width, unsigned height);
+    void ApplyDepthStencilRenderbufferSize(unsigned multiSample, unsigned width, unsigned height);
+
     bool CheckFramebuffer();
     /// Set vertex attrib divisor. No-op if unsupported. Used only on OpenGL.
     void SetVertexAttribDivisor(unsigned location, unsigned divisor);
