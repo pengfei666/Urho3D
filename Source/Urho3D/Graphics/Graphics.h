@@ -90,6 +90,7 @@ public:
 
     /// Set external window handle. Only effective before setting the initial screen mode.
     void SetExternalWindow(void* window);
+    void SetNotUseSDL(bool not_use);
     /// Set window title.
     void SetWindowTitle(const String& windowTitle);
     /// Set window icon.
@@ -306,6 +307,7 @@ public:
     /// Return the current monitor index. Effective on in fullscreen
     int GetMonitor() const { return monitor_; }
 
+    void GetRenderPixel(unsigned char* data, unsigned int data_length);
     /// Return whether triple buffering is enabled.
     bool GetTripleBuffer() const { return tripleBuffer_; }
 
@@ -487,7 +489,7 @@ public:
     IntVector2 GetRenderTargetDimensions() const;
 
     /// Window was resized through user interaction. Called by Input subsystem.
-    void OnWindowResized();
+    void OnWindowResized(int new_width = 0, int new_height = 0);
     /// Window was moved through user interaction. Called by Input subsystem.
     void OnWindowMoved();
     /// Restore GPU objects and reinitialize state. Requires an open window. Used only on OpenGL.
@@ -603,8 +605,13 @@ private:
     unsigned CreateFramebuffer();
     /// Delete a framebuffer using either extension or core functionality. Used only on OpenGL.
     void DeleteFramebuffer(unsigned fbo);
+
+    unsigned CreateColorRenderBuffer(unsigned multiSample, unsigned width, unsigned height);
+    unsigned CreateDepthStencilRenderBuffer(unsigned multiSample, unsigned width, unsigned height);
+
     /// Bind a framebuffer using either extension or core functionality. Used only on OpenGL.
     void BindFramebuffer(unsigned fbo);
+    void BindRenderbuffer(unsigned co);
     /// Bind a framebuffer color attachment using either extension or core functionality. Used only on OpenGL.
     void BindColorAttachment(unsigned index, unsigned target, unsigned object, bool isRenderBuffer);
     /// Bind a framebuffer depth attachment using either extension or core functionality. Used only on OpenGL.
@@ -612,6 +619,10 @@ private:
     /// Bind a framebuffer stencil attachment using either extension or core functionality. Used only on OpenGL.
     void BindStencilAttachment(unsigned object, bool isRenderBuffer);
     /// Check FBO completeness using either extension or core functionality. Used only on OpenGL.
+
+    void ApplyColorRenderbufferSize(unsigned multiSample, unsigned width, unsigned height);
+    void ApplyDepthStencilRenderbufferSize(unsigned multiSample, unsigned width, unsigned height);
+
     bool CheckFramebuffer();
     /// Set vertex attrib divisor. No-op if unsupported. Used only on OpenGL.
     void SetVertexAttribDivisor(unsigned location, unsigned divisor);
@@ -630,6 +641,9 @@ private:
     WeakPtr<Image> windowIcon_;
     /// External window, null if not in use (default.)
     void* externalWindow_;
+
+    bool initialized_;
+    bool not_use_sdl_;
     /// Window width in pixels.
     int width_;
     /// Window height in pixels.
