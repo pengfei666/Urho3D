@@ -90,7 +90,7 @@ public:
 
     /// Set external window handle. Only effective before setting the initial screen mode.
     void SetExternalWindow(void* window);
-	void SetNotUseSDL(bool not_use);
+    void SetNotUseSDL(bool not_use);
     /// Set window title.
     void SetWindowTitle(const String& windowTitle);
     /// Set window icon.
@@ -307,7 +307,7 @@ public:
     /// Return the current monitor index. Effective on in fullscreen
     int GetMonitor() const { return monitor_; }
 
-	void GetRenderPixel(unsigned char* data, unsigned int data_length);
+    void GetRenderPixel(unsigned char* data, unsigned int data_length);
     /// Return whether triple buffering is enabled.
     bool GetTripleBuffer() const { return tripleBuffer_; }
 
@@ -643,7 +643,7 @@ private:
     void* externalWindow_;
 
     bool initialized_;
-	bool not_use_sdl_;
+    bool not_use_sdl_;
     /// Window width in pixels.
     int width_;
     /// Window height in pixels.

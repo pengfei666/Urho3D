@@ -292,11 +292,11 @@ bool Graphics::SetMode(int width, int height, bool fullscreen, bool borderless, 
 {
     URHO3D_PROFILE(SetScreenMode);
 
-	bool use_sdl = !not_use_sdl_;
+    bool use_sdl = !not_use_sdl_;
 
-	if (use_sdl)
-	{
-		bool maximize = false;
+    if (use_sdl)
+    {
+        bool maximize = false;
 
 #if defined(IOS) || defined(TVOS)
     // iOS and tvOS app always take the fullscreen (and with status bar hidden)
@@ -532,25 +532,25 @@ bool Graphics::SetMode(int width, int height, bool fullscreen, bool borderless, 
     Clear(CLEAR_COLOR);
     SDL_GL_SwapWindow(window_);
 	}
-	else // the windows system will be controlled by outer
-	{
-		width_ = width;
-		height_ = height;
-		fullscreen_ = fullscreen;
-		borderless_ = borderless;
-		resizable_ = resizable;
-		highDPI_ = highDPI;
-		vsync_ = vsync;
-		tripleBuffer_ = tripleBuffer;
-		multiSample_ = multiSample;
-		monitor_ = monitor;
-		refreshRate_ = refreshRate;
-	}
+    else // the windows system will be controlled by outer
+    {
+        width_ = width;
+        height_ = height;
+        fullscreen_ = fullscreen;
+        borderless_ = borderless;
+        resizable_ = resizable;
+        highDPI_ = highDPI;
+        vsync_ = vsync;
+        tripleBuffer_ = tripleBuffer;
+        multiSample_ = multiSample;
+        monitor_ = monitor;
+        refreshRate_ = refreshRate;
+    }
 
     CheckFeatureSupport();
 
-	if (not_use_sdl_ )
-	{
+    if (not_use_sdl_)
+    {
         if (impl_->systemFBO_ == 0)
         {
             auto frameBuffer = CreateFramebuffer();
@@ -715,7 +715,6 @@ bool Graphics::BeginFrame()
             SetMode(width, height);
     }
 
-	
     // Re-enable depth test and depth func in case a third party program has modified it
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(glCmpFunc[depthTestMode_]);
@@ -748,8 +747,8 @@ void Graphics::EndFrame()
 
     SendEvent(E_ENDRENDERING);
 
-	if(!not_use_sdl_) // The outer will swap the buffer
-		SDL_GL_SwapWindow(window_);
+    if (!not_use_sdl_) // The outer will swap the buffer
+        SDL_GL_SwapWindow(window_);
 
     // Clean up too large scratch buffers
     CleanupScratchBuffers();
@@ -2144,7 +2143,7 @@ void Graphics::SetStencilTest(bool enable, CompareMode mode, StencilOp pass, Ste
 
 void Graphics::SetNotUseSDL(bool not_use)
 {
-	not_use_sdl_ = not_use;
+    not_use_sdl_ = not_use;
 }
 bool Graphics::IsInitialized() const
 {
@@ -2324,25 +2323,25 @@ IntVector2 Graphics::GetRenderTargetDimensions() const
 
 void Graphics::OnWindowResized(int new_width, int new_height)
 {
-	if (!not_use_sdl_)
-	{
-		if (!window_)
-			return;
+    if (!not_use_sdl_)
+    {
+        if (!window_)
+            return;
 
-		int newWidth, newHeight;
+        int newWidth, newHeight;
 
-		SDL_GL_GetDrawableSize(window_, &newWidth, &newHeight);
-		if (newWidth == width_ && newHeight == height_)
-			return;
+        SDL_GL_GetDrawableSize(window_, &newWidth, &newHeight);
+        if (newWidth == width_ && newHeight == height_)
+            return;
 
-		width_ = newWidth;
-		height_ = newHeight;
-	}
-	else
-	{
-		width_ = new_width;
-		height_ = new_height;
-	}
+        width_ = newWidth;
+        height_ = newHeight;
+    }
+    else
+    {
+        width_ = new_width;
+        height_ = new_height;
+    }
 
     int logicalWidth, logicalHeight;
     SDL_GetWindowSize(window_, &logicalWidth, &logicalHeight);
@@ -2352,17 +2351,17 @@ void Graphics::OnWindowResized(int new_width, int new_height)
     CleanupFramebuffers();
     ResetRenderTargets();
 
-	if (impl_->systemFBO_ != 0)
-	{
+    if (impl_->systemFBO_ != 0)
+    {
         BindFramebuffer(impl_->systemFBO_);
-		BindRenderbuffer(impl_->systemFBOCO_);
+        BindRenderbuffer(impl_->systemFBOCO_);
         ApplyColorRenderbufferSize(multiSample_, width_, height_);
-		BindRenderbuffer(impl_->systemFBODSO_);
+        BindRenderbuffer(impl_->systemFBODSO_);
         ApplyDepthStencilRenderbufferSize(multiSample_, width_, height_);
 
-		impl_->boundFBO_ = impl_->systemFBO_;
-	}
-	
+        impl_->boundFBO_ = impl_->systemFBO_;
+    }
+
 
     URHO3D_LOGDEBUGF("Window was resized to %dx%d", width_, height_);
 
@@ -2525,8 +2524,8 @@ void Graphics::Release(bool clearGPUObjects, bool closeWindow)
         if (!clearGPUObjects)
             URHO3D_LOGINFO("OpenGL context lost");
 
-		if(!not_use_sdl_) // gl context will be managed by outer
-			SDL_GL_DeleteContext(impl_->context_);
+        if (!not_use_sdl_) // gl context will be managed by outer
+            SDL_GL_DeleteContext(impl_->context_);
         impl_->context_ = nullptr;
     }
 
@@ -2860,60 +2859,60 @@ unsigned Graphics::GetFormat(const String& formatName)
 }
 void Graphics::GetRenderPixel(unsigned char* data, unsigned int data_length)
 {
-	assert(data_length == width_ * height_ * 4);
-	glBindFramebuffer(GL_FRAMEBUFFER, impl_->systemFBO_);
-	glReadBuffer(GL_COLOR_ATTACHMENT0);
-	glReadPixels(0, 0, width_, height_, GL_RGBA, GL_UNSIGNED_BYTE, data);
-	glBindFramebuffer(GL_FRAMEBUFFER, impl_->boundFBO_);
+    assert(data_length == width_ * height_ * 4);
+    glBindFramebuffer(GL_FRAMEBUFFER, impl_->systemFBO_);
+    glReadBuffer(GL_COLOR_ATTACHMENT0);
+    glReadPixels(0, 0, width_, height_, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    glBindFramebuffer(GL_FRAMEBUFFER, impl_->boundFBO_);
 }
 void Graphics::CheckFeatureSupport()
 {
-	// Clear cached extensions string from the previous context
-	extensions.Clear();
+    // Clear cached extensions string from the previous context
+    extensions.Clear();
 
-	// Initialize OpenGL extensions library (desktop only)
+    // Initialize OpenGL extensions library (desktop only)
 #ifndef GL_ES_VERSION_2_0
-	GLenum err = glewInit();
-	if (GLEW_OK != err)
-	{
-		URHO3D_LOGERRORF("Could not initialize OpenGL extensions, root cause: '%s'", glewGetErrorString(err));
-		return;
-	}
+    GLenum err = glewInit();
+    if (GLEW_OK != err)
+    {
+        URHO3D_LOGERRORF("Could not initialize OpenGL extensions, root cause: '%s'", glewGetErrorString(err));
+        return;
+    }
 
-	if (!forceGL2_ && GLEW_VERSION_3_2)
-	{
-		gl3Support = true;
-		apiName_ = "GL3";
+    if (!forceGL2_ && GLEW_VERSION_3_2)
+    {
+        gl3Support = true;
+        apiName_ = "GL3";
 
-		// Create and bind a vertex array object that will stay in use throughout
-		unsigned vertexArrayObject;
-		glGenVertexArrays(1, &vertexArrayObject);
-		glBindVertexArray(vertexArrayObject);
-	}
-	else if (GLEW_VERSION_2_0)
-	{
-		if (!GLEW_EXT_framebuffer_object || !GLEW_EXT_packed_depth_stencil)
-		{
-			URHO3D_LOGERROR("EXT_framebuffer_object and EXT_packed_depth_stencil OpenGL extensions are required");
-			return;
-		}
+        // Create and bind a vertex array object that will stay in use throughout
+        unsigned vertexArrayObject;
+        glGenVertexArrays(1, &vertexArrayObject);
+        glBindVertexArray(vertexArrayObject);
+    }
+    else if (GLEW_VERSION_2_0)
+    {
+        if (!GLEW_EXT_framebuffer_object || !GLEW_EXT_packed_depth_stencil)
+        {
+            URHO3D_LOGERROR("EXT_framebuffer_object and EXT_packed_depth_stencil OpenGL extensions are required");
+            return;
+        }
 
-		gl3Support = false;
-		apiName_ = "GL2";
-	}
-	else
-	{
-		URHO3D_LOGERROR("OpenGL 2.0 is required");
-		return;
-	}
+        gl3Support = false;
+        apiName_ = "GL2";
+    }
+    else
+    {
+        URHO3D_LOGERROR("OpenGL 2.0 is required");
+        return;
+    }
 
-	// Enable seamless cubemap if possible
-	// Note: even though we check the extension, this can lead to software fallback on some old GPU's
-	// See https://github.com/urho3d/Urho3D/issues/1380 or
-	// http://distrustsimplicity.net/articles/gl_texture_cube_map_seamless-on-os-x/
-	// In case of trouble or for wanting maximum compatibility, simply remove the glEnable below.
-	if (gl3Support || GLEW_ARB_seamless_cube_map)
-		glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+    // Enable seamless cubemap if possible
+    // Note: even though we check the extension, this can lead to software fallback on some old GPU's
+    // See https://github.com/urho3d/Urho3D/issues/1380 or
+    // http://distrustsimplicity.net/articles/gl_texture_cube_map_seamless-on-os-x/
+    // In case of trouble or for wanting maximum compatibility, simply remove the glEnable below.
+    if (gl3Support || GLEW_ARB_seamless_cube_map)
+        glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 #endif
     // Check supported features: light pre-pass, deferred rendering and hardware depth texture
     lightPrepassSupport_ = false;
@@ -2977,7 +2976,7 @@ void Graphics::CheckFeatureSupport()
         glesDepthStencilFormat = GL_DEPTH_COMPONENT24_OES;
     if (CheckExtension("GL_OES_packed_depth_stencil"))
         glesDepthStencilFormat = GL_DEPTH24_STENCIL8_OES;
-    #ifdef __EMSCRIPTEN__
+#ifdef __EMSCRIPTEN__
     if (!CheckExtension("WEBGL_depth_texture"))
 #else
     if (!CheckExtension("GL_OES_depth_texture"))
@@ -2996,7 +2995,7 @@ void Graphics::CheckFeatureSupport()
         shadowMapFormat_ = GL_DEPTH_COMPONENT;
         hiresShadowMapFormat_ = 0;
         // WebGL shadow map rendering seems to be extremely slow without an attached dummy color texture
-        #ifdef __EMSCRIPTEN__
+#ifdef __EMSCRIPTEN__
         dummyColorFormat_ = GetRGBAFormat();
 #endif
     }
