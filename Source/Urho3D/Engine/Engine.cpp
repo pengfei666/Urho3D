@@ -245,9 +245,6 @@ bool Engine::Initialize(const VariantMap& parameters)
 #ifdef URHO3D_OPENGL
         if (HasParameter(parameters, EP_FORCE_GL2))
             graphics->SetForceGL2(GetParameter(parameters, EP_FORCE_GL2).GetBool());
-
-		if (HasParameter(parameters, EP_EXTERNAL_GL_CONTEXT))
-			graphics->SetExternalGLContext(GetParameter(parameters, EP_EXTERNAL_GL_CONTEXT).GetVoidPtr());
 #endif
 
 		if (HasParameter(parameters, EP_NOT_USE_SDL))

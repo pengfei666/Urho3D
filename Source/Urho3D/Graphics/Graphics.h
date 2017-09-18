@@ -90,7 +90,6 @@ public:
 
     /// Set external window handle. Only effective before setting the initial screen mode.
     void SetExternalWindow(void* window);
-	void SetExternalGLContext(void* context);
 	void SetNotUseSDL(bool not_use);
     /// Set window title.
     void SetWindowTitle(const String& windowTitle);
@@ -643,6 +642,7 @@ private:
     /// External window, null if not in use (default.)
     void* externalWindow_;
 
+    bool initialized_;
 	bool not_use_sdl_;
     /// Window width in pixels.
     int width_;

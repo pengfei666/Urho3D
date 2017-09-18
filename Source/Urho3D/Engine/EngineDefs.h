@@ -31,7 +31,6 @@ static const String EP_BORDERLESS = "Borderless";
 static const String EP_DUMP_SHADERS = "DumpShaders";
 static const String EP_EVENT_PROFILER = "EventProfiler";
 static const String EP_EXTERNAL_WINDOW = "ExternalWindow";
-static const String EP_EXTERNAL_GL_CONTEXT = "ExternalGLContext";
 static const String EP_NOT_USE_SDL = "NotUseSDL";
 static const String EP_FLUSH_GPU = "FlushGPU";
 static const String EP_FORCE_GL2 = "ForceGL2";
