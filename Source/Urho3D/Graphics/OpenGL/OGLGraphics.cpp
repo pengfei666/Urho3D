@@ -551,40 +551,47 @@ bool Graphics::SetMode(int width, int height, bool fullscreen, bool borderless, 
 
 	if (not_use_sdl_ )
 	{
-		if (impl_->systemFBO_ == 0)
-		{
-			auto frameBuffer = CreateFramebuffer();
-			GLuint renderBuffers[2];
-			glGenRenderbuffers(2, renderBuffers);
+        if (impl_->systemFBO_ == 0)
+        {
+            auto frameBuffer = CreateFramebuffer();
+            BindFramebuffer(frameBuffer);
+            GLuint renderBuffers[2];
+            renderBuffers[0] = CreateColorRenderBuffer(multiSample_, width_, height_);
+            renderBuffers[1] = CreateDepthStencilRenderBuffer(multiSample_, width_, height_);
+            BindColorAttachment(0, 0, renderBuffers[0], true);
+            BindDepthAttachment(renderBuffers[1], true);
+            BindStencilAttachment(renderBuffers[1], true);
 
-			BindFramebuffer(frameBuffer);
-			glBindRenderbuffer(GL_RENDERBUFFER, renderBuffers[0]);
-			glRenderbufferStorage(GL_RENDERBUFFER, GetRGBAFormat(), width_, height_);
+            impl_->systemFBO_ = frameBuffer;
+            impl_->systemFBOCO_ = renderBuffers[0];
+            impl_->systemFBODSO_ = renderBuffers[1];
+        }
+        else
+        {
+            auto frameBuffer = impl_->systemFBO_;
+            BindFramebuffer(frameBuffer);
+#ifndef GL_ES_VERSION_2_0
+            glBindRenderbuffer(GL_RENDERBUFFER, impl_->systemFBOCO_);
+            if (multiSample_ > 1)
+                glRenderbufferStorageMultisample(GL_RENDERBUFFER, multiSample_, GetRGBAFormat(), width_, height_);
+            else
+                glRenderbufferStorage(GL_RENDERBUFFER, GetRGBAFormat(), width_, height_);
 
-			glBindRenderbuffer(GL_RENDERBUFFER, renderBuffers[1]);
-			glRenderbufferStorage(GL_RENDERBUFFER, GetDepthStencilFormat(), width_, height_);
+            glBindRenderbuffer(GL_RENDERBUFFER, impl_->systemFBODSO_);
+            if (multiSample_ > 1)
+                glRenderbufferStorageMultisample(GL_RENDERBUFFER, multiSample_, GetDepthStencilFormat(), width_, height_);
+            else
+                glRenderbufferStorage(GL_RENDERBUFFER, GetDepthStencilFormat(), width_, height_);
+#else
+            glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, impl_->systemFBOCO_);       
+            glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GetRGBAFormat(), width_, height_);
+            glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, impl_->systemFBODSO_);   
+            glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GetDepthStencilFormat(), width_, height_);
+#endif
+        }
 
-			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, renderBuffers[0]);
-			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, renderBuffers[1]);
-			impl_->systemFBO_ = frameBuffer;
-			impl_->systemFBOCO_ = renderBuffers[0];
-			impl_->systemFBODSO_ = renderBuffers[1];
-		}
-		else
-		{
-			auto frameBuffer = impl_->systemFBO_;
-			BindFramebuffer(frameBuffer);
-			glBindRenderbuffer(GL_RENDERBUFFER, impl_->systemFBOCO_);
-			glRenderbufferStorage(GL_RENDERBUFFER, GetRGBAFormat(), width_, height_);
-
-			glBindRenderbuffer(GL_RENDERBUFFER, impl_->systemFBODSO_);
-			glRenderbufferStorage(GL_RENDERBUFFER, GetDepthStencilFormat(), width_, height_);
-		}
-		
-
-		
-		impl_->boundFBO_ = impl_->systemFBO_;
-		}
+        impl_->boundFBO_ = impl_->systemFBO_;
+    }
 #ifdef URHO3D_LOGGING
     String msg;
     msg.AppendWithFormat("Set screen mode %dx%d %s monitor %d", width_, height_, (fullscreen_ ? "fullscreen" : "windowed"), monitor_);
@@ -2156,13 +2163,8 @@ bool Graphics::IsDeviceLost() const
     if (window_ && (SDL_GetWindowFlags(window_) & SDL_WINDOW_MINIMIZED) != 0)
         return true;
 #endif
-
-    if (!not_use_sdl_)
-    {
-        return impl_->context_ == nullptr;
-    }
-
-    return false;
+    // not_use_sdl_ || impl_->context != nullptr
+    return !not_use_sdl_ && impl_->context_ == nullptr;
 }
 
 PODVector<int> Graphics::GetMultiSampleLevels() const
@@ -2352,11 +2354,11 @@ void Graphics::OnWindowResized(int new_width, int new_height)
 
 	if (impl_->systemFBO_ != 0)
 	{
-		glBindFramebuffer(GL_FRAMEBUFFER, impl_->systemFBO_);
-		glBindRenderbuffer(GL_RENDERBUFFER, impl_->systemFBOCO_);
-		glRenderbufferStorage(GL_RENDERBUFFER, GetRGBAFormat(), width_, height_);
-		glBindRenderbuffer(GL_RENDERBUFFER, impl_->systemFBODSO_);
-		glRenderbufferStorage(GL_RENDERBUFFER, GetDepthStencilFormat(), width_, height_);
+        BindFramebuffer(impl_->systemFBO_);
+		BindRenderbuffer(impl_->systemFBOCO_);
+        ApplyColorRenderbufferSize(multiSample_, width_, height_);
+		BindRenderbuffer(impl_->systemFBODSO_);
+        ApplyDepthStencilRenderbufferSize(multiSample_, width_, height_);
 
 		impl_->boundFBO_ = impl_->systemFBO_;
 	}
@@ -3457,6 +3459,48 @@ void Graphics::DeleteFramebuffer(unsigned fbo)
         glDeleteFramebuffers(1, &fbo);
 }
 
+unsigned Graphics::CreateColorRenderBuffer(unsigned multiSample, unsigned width, unsigned height)
+{
+    GLuint renderBuffer;
+#ifndef GL_ES_VERSION_2_0
+    if (gl3Support)
+    {
+        glGenRenderbuffers(1, &renderBuffer);
+        glBindRenderbuffer(GL_RENDERBUFFER, renderBuffer);
+    }
+    else
+#endif
+    {
+        glGenRenderbuffersEXT(1, &renderBuffer);
+        glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, renderBuffer);
+    }
+
+    ApplyColorRenderbufferSize(multiSample, width, height);
+
+    return renderBuffer;
+}
+
+unsigned Graphics::CreateDepthStencilRenderBuffer(unsigned multiSample, unsigned width, unsigned height)
+{
+    GLuint renderBuffer;
+#ifndef GL_ES_VERSION_2_0
+    if (gl3Support)
+    {
+        glGenRenderbuffers(1, &renderBuffer);
+        glBindRenderbuffer(GL_RENDERBUFFER, renderBuffer);
+    }
+    else
+#endif
+    {
+        glGenRenderbuffersEXT(1, &renderBuffer);
+        glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, renderBuffer);
+    }
+
+    ApplyDepthStencilRenderbufferSize(multiSample, width, height);
+
+    return renderBuffer;
+}
+
 void Graphics::BindFramebuffer(unsigned fbo)
 {
 #ifndef GL_ES_VERSION_2_0
@@ -3465,6 +3509,20 @@ void Graphics::BindFramebuffer(unsigned fbo)
     else
 #endif
         glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+}
+
+void Graphics::BindRenderbuffer(unsigned renderBuffer)
+{
+#ifndef GL_ES_VERSION_2_0
+    if (gl3Support)
+    {
+        glBindRenderbuffer(GL_RENDERBUFFER, renderBuffer);
+    }
+    else
+#endif
+    {
+        glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, renderBuffer);
+    }
 }
 
 void Graphics::BindColorAttachment(unsigned index, unsigned target, unsigned object, bool isRenderBuffer)
@@ -3533,6 +3591,50 @@ void Graphics::BindStencilAttachment(unsigned object, bool isRenderBuffer)
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_TEXTURE_2D, object, 0);
         else
             glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, object);
+    }
+}
+
+void Graphics::ApplyColorRenderbufferSize(unsigned multiSample, unsigned width, unsigned height)
+{
+#ifndef GL_ES_VERSION_2_0
+    if (gl3Support)
+    {
+        if (multiSample > 1)
+            glRenderbufferStorageMultisample(GL_RENDERBUFFER, multiSample_, GetRGBAFormat(), width, height);
+        else
+            glRenderbufferStorage(GL_RENDERBUFFER, GetRGBAFormat(), width, height);
+    }
+    else
+#endif
+    {
+#ifndef GL_ES_VERSION_2_0
+        if (multiSample > 1)
+            glRenderbufferStorageMultisampleEXT(GL_RENDERBUFFER_EXT, multiSample, GetRGBAFormat(), width, height);
+        else
+#endif
+            glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GetRGBAFormat(), width, height);
+    }
+}
+
+void Graphics::ApplyDepthStencilRenderbufferSize(unsigned multiSample, unsigned width, unsigned height)
+{
+#ifndef GL_ES_VERSION_2_0
+    if (gl3Support)
+    {
+        if (multiSample > 1)
+            glRenderbufferStorageMultisample(GL_RENDERBUFFER, multiSample_, GetDepthStencilFormat(), width, height);
+        else
+            glRenderbufferStorage(GL_RENDERBUFFER, GetDepthStencilFormat(), width, height);
+    }
+    else
+#endif
+    {
+#ifndef GL_ES_VERSION_2_0
+        if (multiSample > 1)
+            glRenderbufferStorageMultisampleEXT(GL_RENDERBUFFER_EXT, multiSample, GetDepthStencilFormat(), width, height);
+        else
+#endif
+            glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GetDepthStencilFormat(), width, height);
     }
 }
 
