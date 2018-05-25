@@ -668,14 +668,7 @@ void UpdateModelInfo(Model@ model)
 
     for (uint g = 0; g < model.numGeometries; ++g)
     {
-        uint numLods = model.numGeometryLodLevels[g];
-        infoStr += "\n  Geometry " + g + "\n    Lods: " + numLods;
-        for (uint l = 0; l < numLods; l++)
-        {
-            Geometry@ geom = model.GetGeometry(g, l);
-            infoStr += "\n      Vertex Count: " + geom.vertexCount;
-            infoStr += "\n      Index Count: " + geom.indexCount;
-        }
+        infoStr += "\n  Geometry " + g + "\n    Lods: " + model.numGeometryLodLevels[g];
     }
 
     modelInfoText.text = infoStr;
